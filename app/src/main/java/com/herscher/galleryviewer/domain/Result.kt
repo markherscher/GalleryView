@@ -34,7 +34,7 @@ sealed class Result<out T> {
      * @param message the message of the response
      */
     data class NetworkError(
-        val statusCode: Int,
+        val statusCode: Int?,
         val message: String,
     ) : Result<Nothing>()
 }
