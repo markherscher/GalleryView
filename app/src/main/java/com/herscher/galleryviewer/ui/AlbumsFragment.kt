@@ -10,12 +10,13 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.herscher.galleryviewer.api.AlbumResponse
 import com.herscher.galleryviewer.databinding.FragmentAlbumsBinding
 import com.herscher.galleryviewer.databinding.ViewHolderAlbumBinding
 import com.herscher.galleryviewer.util.showOnlyChildView
 import com.herscher.galleryviewer.viewmodel.AlbumsViewModel
 import androidx.fragment.app.viewModels
+import com.herscher.galleryviewer.R
+import com.herscher.galleryviewer.domain.Album
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
@@ -23,8 +24,6 @@ import kotlinx.coroutines.launch
 class AlbumsFragment : Fragment() {
     private var _binding: FragmentAlbumsBinding? = null
     private val binding: FragmentAlbumsBinding get() = _binding!!
-
-    // TODO view model DI
     private val viewModel: AlbumsViewModel by viewModels()
 
     // Do not hold a reference to the adapter as that could leak memory if the view is destroyed
@@ -36,7 +35,17 @@ class AlbumsFragment : Fragment() {
         _binding = FragmentAlbumsBinding.inflate(inflater, container, false)
 
         binding.apply {
-            albumRecyclerView.adapter = AlbumAdapter(inflater)
+            albumRecyclerView.adapter = AlbumAdapter(inflater) { albumId, albumName ->
+                // This is where we should use a nav framework, by either rolling our own or using
+                // something like Jetpack Navigation. This is not a normal way to navigate.
+                parentFragmentManager.beginTransaction()
+                    .replace(
+                        R.id.container,
+                        PhotosFragment.newInstance(albumId = albumId, albumName = albumName)
+                    )
+                    .addToBackStack(null)
+                    .commit()
+            }
             albumRecyclerView.layoutManager = LinearLayoutManager(requireContext())
             retryButton.setOnClickListener { viewModel.refresh() }
         }
@@ -78,10 +87,12 @@ class AlbumsFragment : Fragment() {
         fun newInstance() = AlbumsFragment()
     }
 
-    private class AlbumAdapter(private val inflater: LayoutInflater) :
-        RecyclerView.Adapter<AlbumAdapter.AlbumViewHolder>() {
+    private class AlbumAdapter(
+        private val inflater: LayoutInflater,
+        private val clickHandler: (Int, String) -> Unit
+    ) : RecyclerView.Adapter<AlbumAdapter.AlbumViewHolder>() {
 
-        var albumList: List<AlbumResponse> = emptyList()
+        var albumList: List<Album> = emptyList()
             set(value) {
                 field = value
 
@@ -95,13 +106,16 @@ class AlbumsFragment : Fragment() {
         }
 
         override fun onBindViewHolder(holder: AlbumViewHolder, position: Int) {
-            holder.binding.albumTitle.text = albumList[position].title
+            val album = albumList[position]
+            holder.binding.albumTitle.text = album.title
+            holder.binding.root.setOnClickListener {
+                clickHandler(album.id, album.title)
+            }
         }
 
         override fun getItemCount(): Int = albumList.size
 
         private inner class AlbumViewHolder(val binding: ViewHolderAlbumBinding) :
-            RecyclerView.ViewHolder(binding.root) {
-        }
+            RecyclerView.ViewHolder(binding.root)
     }
 }

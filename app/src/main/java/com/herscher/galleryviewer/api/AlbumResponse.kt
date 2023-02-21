@@ -6,4 +6,5 @@ import com.squareup.moshi.JsonClass
 data class AlbumResponse(
     val id: Int,
     val title: String,
+    val userId: Int,
 )
