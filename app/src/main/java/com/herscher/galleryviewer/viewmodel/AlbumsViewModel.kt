@@ -18,7 +18,7 @@ class AlbumsViewModel @Inject constructor(
     private val _uiState = MutableStateFlow<UiState>(UiState.Loading)
     val uiState = _uiState.asStateFlow()
 
-    init {
+    fun viewCreated() {
         refresh()
     }
 

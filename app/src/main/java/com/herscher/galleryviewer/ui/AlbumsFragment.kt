@@ -56,6 +56,8 @@ class AlbumsFragment : Fragment() {
             }
         }
 
+        viewModel.viewCreated()
+
         return binding.root
     }
 
